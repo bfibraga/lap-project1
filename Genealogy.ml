@@ -148,21 +148,26 @@ let rec height rep =
 
 
 (* FUNCTION makeATree *)
+let rec belongsList rep a = match rep with
+  |[] -> false
+  |(x, _)::xs -> if x = a then true else belongsList xs a
+
 let rec belongsRep rep a = 
-	if rep = [] then false
-	else let (head, tail) = cut rep in
-		if inter head [a] = [a] then true
-		else belongsRep tail a
-
+  if rep = [] then false
+  else let (head, tail) = cut rep in
+    if belongsList head a then true
+    else belongsRep tail a
+    
+      
 let rec buildATree rep a = 
-	let parentsList = parents rep [a] in 
-	match parentsList with
-	| [] -> ANode(a, ANil, ANil)
-	| [x] -> ANode(a, buildATree rep x, ANil)
-	| [x, y] -> ANode(a , buildATree rep x, buildATree rep y)
+  let parentsList = parents rep [a] in 
+  match parentsList with
+  | [] -> ANode(a, ANil, ANil)
+  | x::[] -> ANode(a, buildATree rep x, ANil) 
+  | x::y::_ -> ANode(a, buildATree rep x, buildATree rep y)
 
-let makeATree rep a = 
-	if !(belongsRep rep a) then ANode(a, ANil, ANil)
+let makeATree rep a =
+  if belongsRep rep a then ANode(a, ANil, ANil)
 		else buildATree rep a
 
 
