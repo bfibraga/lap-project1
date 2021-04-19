@@ -143,29 +143,33 @@ let rec parents rep l = (* get all the parents of the list l *)
 
 let rec height rep =
 	if rep = [] then 0
-	else let (head, tail) = cut rep in
-		1 + height rep
+	else let (_, tail) = cut rep in
+		1 + height tail
 
 
-(* FUNCTION makeATree *)
+
 let rec belongsList rep a = match rep with
   |[] -> false
   |(x, _)::xs -> if x = a then true else belongsList xs a
 
+(* FUNCTION belongsRep - goes through the repository, grabbing a list of individuals and comparing them 
+to the given element, to check if the element does in fact exist in the repo. *)
 let rec belongsRep rep a = 
   if rep = [] then false
   else let (head, tail) = cut rep in
     if belongsList head a then true
     else belongsRep tail a
     
-      
+(* FUNCTION buildATree - checks if given element has parents.
+	If so, we call the function recursivily on the subtrees of the new node with that parent*)
 let rec buildATree rep a = 
   let parentsList = parents rep [a] in 
   match parentsList with
   | [] -> ANode(a, ANil, ANil)
   | x::[] -> ANode(a, buildATree rep x, ANil) 
   | x::y::_ -> ANode(a, buildATree rep x, buildATree rep y)
-
+  
+(* FUNCTION makeATree *)
 let makeATree rep a =
   if belongsRep rep a then ANode(a, ANil, ANil)
 		else buildATree rep a
@@ -191,14 +195,17 @@ let repOfDTree t = []
 
 (* FUNCTION descendantsN *)
 
-let descendantsN rep n lst =
-	[]
+let rec descendantsN rep n lst =
+	if n = 0 then lst
+	else let child = children rep lst in
+	descendantsN rep (n-1) child
 
 
 (* FUNCTION siblings *)
 
 let siblings rep lst =
-	[]
+	let parent = parents rep lst in
+	children rep parent
 
 
 (* FUNCTION siblingsInbreeding *)
