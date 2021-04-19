@@ -75,7 +75,6 @@ let inter l1 l2 =
 let diff l1 l2 =
 	filter (fun a -> not (mem a l2)) l1
 
-
 (* TYPES *)
 
 type item = string * string list
@@ -177,15 +176,27 @@ let makeATree rep a =
 
 (* FUNCTION repOfATree *)
 
-let repOfATree t = match t with
+let repOfATree t = 
+	match t with
 	| ANil -> []
-	| ANode(a, lft, rgt) -> a::lft::rgt
+	| ANode(a, lft, rgt) -> []
 
 
 (* FUNCTION makeDTree *)
 
-let makeDTree rep a =
-	DNil
+let rec nbuildDTree rep d = 
+	let childrenList = children rep [d] in
+	match childrenList with 
+	| [] -> DNode(d, [])
+	| x::[] -> DNode(d, DNode(x))
+ 	| x::xs -> DNode(d, x::(lnbuildDTree xs rep))
+and lnbuildDTree cl rep= match cl with 
+	| [] -> []
+	| c::cs -> (nbuildDTree rep c)@(lnbuildDTree cs)
+
+let makeDTree rep d =
+	if belongsRep rep d then DNode(d, DNil, DNil)
+	else buildDTree rep d
 
 
 (* FUNCTION repOfDTree *)
