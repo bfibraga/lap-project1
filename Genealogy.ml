@@ -145,34 +145,15 @@ let rec height rep =
 	else let (_, tail) = cut rep in
 		1 + height tail
 
-
-
-let rec belongsList rep a = match rep with
-  |[] -> false
-  |(x, _)::xs -> if x = a then true else belongsList xs a
-
-(* FUNCTION belongsRep - goes through the repository, grabbing a list of individuals and comparing them 
-to the given element, to check if the element does in fact exist in the repo. *)
-let rec belongsRep rep a = 
-  if rep = [] then false
-  else let (head, tail) = cut rep in
-    if belongsList head a then true
-    else belongsRep tail a
-    
-(* FUNCTION buildATree - checks if given element has parents.
-	If so, we call the function recursivily on the subtrees of the new node with that parent*)
-let rec buildATree rep a = 
-  let parentsList = parents rep [a] in 
-  match parentsList with
-  | [] -> ANode(a, ANil, ANil)
-  | x::[] -> ANode(a, buildATree rep x, ANil) 
-  | x::y::_ -> ANode(a, buildATree rep x, buildATree rep y)
-  
 (* FUNCTION makeATree *)
-let makeATree rep a =
-  if belongsRep rep a then ANode(a, ANil, ANil)
-		else buildATree rep a
-
+let rec makeATree rep a =
+  if not (mem a (all1 rep)) then ANode(a, ANil, ANil) 
+	else let parentList = parents rep [a] in
+	match parentList with
+	| [] -> ANode(a, ANil, ANil)
+	| x::[] -> ANode(a, makeATree rep x, ANil) 
+	| x::y::_ -> ANode(a, makeATree rep x, makeATree rep y)
+	
 
 (* FUNCTION repOfATree *)
 
@@ -195,7 +176,7 @@ and lnbuildDTree cl rep= match cl with
 	| c::cs -> (nbuildDTree rep c)@(lnbuildDTree cs)
 
 let makeDTree rep d =
-	if belongsRep rep d then DNode(d, DNil, DNil)
+	if not( mem d (all1 rep)) then DNode(d, DNil, DNil)
 	else buildDTree rep d
 
 
@@ -226,9 +207,21 @@ let siblingsInbreeding rep =
 
 
 (* FUNCTION waveN *)
+let rec waveNParents rep n lst =
+  if n = 0 then lst
+  else let parent = diff (parents rep lst) lst in
+    waveNParents rep (n-1) parent 
+	
+let rec waveNChildren rep n lst =
+  if n = 0 then lst
+  else let childs = diff (children rep lst) lst in
+    waveNChildren rep (n-1) childs 
 
 let waveN rep n lst =
-	[]
+  if n = 0 then lst
+  else let parent = parents rep lst in
+    let childs = children rep lst in
+    (waveNParents rep (n-1) parent) @ (waveNChildren rep (n-1) childs) 
 
 
 (* FUNCTION merge *)
