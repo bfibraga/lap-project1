@@ -160,6 +160,9 @@ let rec makeATree rep a =
 let repOfATree t = 
 	match t with
 	| ANil -> []
+	| ANode(x, ANil, ANil) -> []
+	| ANode(x, ANil, r) -> []
+	| ANode(x, l, ANil) -> []
 	| ANode(a, lft, rgt) -> []
 
 
@@ -169,15 +172,14 @@ let rec nbuildDTree rep d =
 	let childrenList = children rep [d] in
 	match childrenList with 
 	| [] -> DNode(d, [])
-	| x::[] -> DNode(d, DNode(x))
- 	| x::xs -> DNode(d, x::(lnbuildDTree xs rep))
-and lnbuildDTree cl rep= match cl with 
+ 	| x::xs -> DNode(d, lnbuildDTree (x::xs) rep)
+and lnbuildDTree cl rep = match cl with 
 	| [] -> []
-	| c::cs -> (nbuildDTree rep c)@(lnbuildDTree cs)
+	| c::cs -> clean ([nbuildDTree rep c] @ (lnbuildDTree cs rep)) (*maybe change @ to append function*)
 
 let makeDTree rep d =
-	if not( mem d (all1 rep)) then DNode(d, DNil, DNil)
-	else buildDTree rep d
+	if not( mem d (all1 rep)) then DNode(d, [])
+	else nbuildDTree rep d
 
 
 (* FUNCTION repOfDTree *)
