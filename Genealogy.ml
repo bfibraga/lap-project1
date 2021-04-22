@@ -196,6 +196,7 @@ let rec repOfDTree t =
   match t with
   | DNil -> []
   | DNode(x, xs) -> clean ((x, listOfDNodesElements (xs))::getDNode (xs))
+  
 and listOfDNodesElements l =
   match l with
   | [] -> []
@@ -248,9 +249,14 @@ let waveN rep n lst =
 
 
 (* FUNCTION merge *)
+let rec mergeRec l rep1 rep2 =
+	match l with
+	| [] -> []
+	| x::xs -> (x, union (children rep1 [x]) (children rep2 [x]))::mergeRec xs rep1 rep2
 
 let merge rep1 rep2 =
-	[]
+	let individuals = union (all1 rep1) (all1 rep2) in
+		mergeRec individuals rep1 rep2 
 
 
 (* FUNCTION supremum *)
