@@ -243,9 +243,12 @@ let validStructural rep =
 
 (* FUNCTION validSemantic *)
 
+let rec validSemanticRec rep1 rep2  =       
+  match rep2 with
+  | [] -> true
+  | (x, xs)::tail -> if mem x xs then false
+      else if (len (parents rep1 [x]) > 2) then false
+      else validSemanticRec rep1 tail
+          
 let validSemantic rep =
-	match rep with
-	| [] -> true
-	| (x, xs)::tail -> if mem x xs then false
-	else if len (parents rep [x]) > 2 then false
-	else validSemantic tail
+  validSemanticRec rep rep
