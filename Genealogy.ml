@@ -1,8 +1,8 @@
 (* Genealogy module body *)
 
 (* 
-Aluno 1: ????? mandatory to fill
-Aluno 2: ????? mandatory to fill
+Aluno 1: 57833
+Aluno 2: 57747
 
 Comment:
 
@@ -160,9 +160,6 @@ let rec makeATree rep a =
 let repOfATree t = 
 	match t with
 	| ANil -> []
-	| ANode(x, ANil, ANil) -> []
-	| ANode(x, ANil, r) -> []
-	| ANode(x, l, ANil) -> []
 	| ANode(a, lft, rgt) -> []
 
 
@@ -247,4 +244,8 @@ let validStructural rep =
 (* FUNCTION validSemantic *)
 
 let validSemantic rep =
-	false
+	match rep with
+	| [] -> true
+	| (x, xs)::tail -> if mem x xs then false
+	else if len (parents rep [x]) > 2 then false
+	else validSemantic tail
