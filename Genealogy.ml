@@ -96,7 +96,17 @@ let example = [
            ("i", []);
            ("j", [])
           ]
-
+		  
+let example2 = [
+			("a", ["f";"g"]);
+			("a", []);
+			("c", ["h";"i"]);
+			("f", ["g"; "j"]);
+			("g", ["j"]);
+			("h", []);
+			("i", []);
+			("j", [])
+			]
 
 (* BASIC REPOSITORY FUNCTIONS - you can add more *)
 
@@ -181,7 +191,21 @@ let makeDTree rep d =
 
 (* FUNCTION repOfDTree *)
 
-let repOfDTree t = []
+
+let rec repOfDTree t = 
+  match t with
+  | DNil -> []
+  | DNode(x, xs) -> clean ((x, listOfDNodesElements (xs))::getDNode (xs))
+and listOfDNodesElements l =
+  match l with
+  | [] -> []
+  | DNil::_ -> failwith "repOfDTree: DNil inside the DNode list"
+  | DNode(x, _)::xs -> x::listOfDNodesElements xs 
+                         
+and getDNode tList =
+  match tList with
+  | [] -> []
+  | x::xs -> repOfDTree x @ getDNode xs
 
 
 (* FUNCTION descendantsN *)
@@ -237,9 +261,16 @@ let supremum rep s =
 
 (* FUNCTION validStructural *)
 
-let validStructural rep =
-	false
 
+let rec checkOccurence rep1 rep2 =
+  match rep2 with
+  | [] -> true 
+  | (_, sons)::xs -> if inter (sons) (all1 rep1) = sons then checkOccurence rep1 xs else false
+
+let validStructural rep =
+  let individuals = all1 rep in
+  if (clean individuals) <> individuals then false
+  else (checkOccurence rep rep) 
 
 (* FUNCTION validSemantic *)
 
