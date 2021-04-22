@@ -99,13 +99,13 @@ let example = [
 		  
 let example2 = [
 			("a", ["f";"g"]);
-			("a", []);
-			("c", ["h";"i"]);
-			("f", ["g"; "j"]);
+			("b", ["h";"i"]);
+			("f", ["l"; "b"]);
 			("g", ["j"]);
-			("h", []);
+			("h", ["l"]);
 			("i", []);
-			("j", [])
+			("j", []);
+			("l", []);
 			]
 
 (* BASIC REPOSITORY FUNCTIONS - you can add more *)
@@ -165,12 +165,27 @@ let rec makeATree rep a =
 	| x::y::_ -> ANode(a, makeATree rep x, makeATree rep y)
 	
 
-(* FUNCTION repOfATree *)
 
+let getElementFromANode t = 
+  match t with 
+  | ANil -> failwith "getElementFromANode: can't get element from empty tree"
+  | ANode(x, _, _) -> x
+                   
+let rec repOfATreeRec t rep =
+  match t with
+  | ANil -> rep
+  | ANode(a, ANil, ANil) -> rep
+  | ANode(a, lft, rgt) -> 
+      let leftParent = getElementFromANode (lft) in
+      let rightParent = getElementFromANode (rgt) in
+      merge (repOfATreeRec lft ((leftParent, [a])::rep)) (repOfATreeRec rgt ((rightParent, [a])::rep))
+	  
+(* FUNCTION repOfATree *)
 let repOfATree t = 
-	match t with
-	| ANil -> []
-	| ANode(a, lft, rgt) -> []
+  match t with
+  |ANil -> []
+  |ANode(a, _, _) -> 
+      repOfATreeRec t [(a, [])]
 
 
 (* FUNCTION makeDTree *)
