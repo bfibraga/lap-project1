@@ -175,10 +175,17 @@ let rec repOfATreeRec t rep =
   match t with
   | ANil -> rep
   | ANode(a, ANil, ANil) -> rep
+  | ANode(a, lft, ANil) -> 
+      let leftParent = getElementFromANode (lft) in
+      repOfATreeRec lft ((leftParent, [a])::rep)
+  | ANode (a, ANil, rgt) -> 
+      let rightParent = getElementFromANode (rgt) in
+      repOfATreeRec rgt ((rightParent, [a])::rep)
   | ANode(a, lft, rgt) -> 
       let leftParent = getElementFromANode (lft) in
       let rightParent = getElementFromANode (rgt) in
       merge (repOfATreeRec lft ((leftParent, [a])::rep)) (repOfATreeRec rgt ((rightParent, [a])::rep))
+  
 	  
 (* FUNCTION repOfATree *)
 let repOfATree t = 
