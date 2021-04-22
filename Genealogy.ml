@@ -253,21 +253,14 @@ let siblingsInbreeding rep =
 
 
 (* FUNCTION waveN *)
-let rec waveNParents rep n lst =
-  if n = 0 then lst
-  else let parent = diff (parents rep lst) lst in
-    waveNParents rep (n-1) parent 
-	
-let rec waveNChildren rep n lst =
-  if n = 0 then lst
-  else let childs = diff (children rep lst) lst in
-    waveNChildren rep (n-1) childs 
 
 let waveN rep n lst =
-  if n = 0 then lst
-  else let parent = parents rep lst in
-    let childs = children rep lst in
-    (waveNParents rep (n-1) parent) @ (waveNChildren rep (n-1) childs) 
+	waveNRec rep n lst lst
+	and waveNRec rep n lst discarded =
+	if n = 0 then lst
+	else let parent = parents rep lst in
+		let childs = children rep lst in
+    waveNRec rep (n-1) (diff (parents @ childs) (discarded)) (union (parents @ child) (discarded))
 
 
 (* FUNCTION merge *)
