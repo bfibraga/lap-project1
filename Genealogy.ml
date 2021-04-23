@@ -310,15 +310,16 @@ let supremum rep s =
 (* FUNCTION validStructural *)
 
 
-let rec checkOccurence rep1 rep2 =
+let rec checkOccurence rep1 rep2 = 
   match rep2 with
   | [] -> true 
   | (_, sons)::xs -> if inter (sons) (all1 rep1) = sons then checkOccurence rep1 xs 
-					 else false
+      else false
 
 let validStructural rep =
   let individuals = all1 rep in
-  if (clean individuals) <> individuals then false
+ 
+  if inter ((clean individuals))  (individuals) = individuals then false 
   else (checkOccurence rep rep)
 
 (* FUNCTION validSemantic *)
