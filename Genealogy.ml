@@ -256,23 +256,14 @@ let siblingsInbreeding rep = inter (parents example (all2 example)) (all2 exampl
 
 
 (* FUNCTION waveN *)
-let rec waveNParents rep n lst =
-  if n = 0 then lst
-  else let parent = diff (parents rep lst) lst in
-    waveNParents rep (n-1) parent 
-	
-let rec waveNChildren rep n lst =
-  if n = 0 then lst
-  else let childs = diff (children rep lst) lst in
-    waveNChildren rep (n-1) childs 
-
-let waveN rep n lst =
+let rec waveN rep n lst =
+  waveNRec rep n lst lst
+and waveNRec rep n lst discarded =
   if n = 0 then lst
   else let parent = parents rep lst in
     let childs = children rep lst in
-    (waveNParents rep (n-1) parent) @ (waveNChildren rep (n-1) childs) 
-
-
+    waveNRec rep (n-1) (diff (parent @ childs) (discarded)) (union (parent @ childs) (discarded))
+  
 (* FUNCTION merge *)
 
 let rec mergeRec l rep1 rep2 =
