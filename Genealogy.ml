@@ -243,7 +243,7 @@ let rec descendantsN rep n lst =
 
 
 (* FUNCTION siblings *)
-
+	
 let siblings rep lst =
 	let parent = parents rep lst in
 	children rep parent
@@ -252,7 +252,8 @@ let siblings rep lst =
 (* FUNCTION siblingsInbreeding *)
 	
 (*We should reconsider this function*)
-let siblingsInbreeding rep = inter (parents example (all2 example)) (all2 example)
+let siblingsInbreeding rep = 
+
 
 
 (* FUNCTION waveN *)
@@ -279,9 +280,10 @@ let merge rep1 rep2 =
 (* FUNCTION supremum *)
 	
 let rec getAllAncestors rep l = 
-	match l with
-	| [] -> []
-	| x::xs -> union (getAllAncestors rep xs) (parents rep [x])
+  let parent = parents rep l in 
+  let grandParent = union (parent) (parents rep parent) in
+  if diff grandParent parent  = [] then parent else  
+    union grandParent (getAllAncestors rep grandParent)
 	
 let rec getPathList rep l = 
 	match l with 
@@ -323,11 +325,15 @@ let validStructural rep =
   else (checkOccurence rep rep)
 
 (* FUNCTION validSemantic *)
+let rec checkLoop rep x = 
+  let ancestors = getAllAncestors rep [x] in
+  diff [x] ancestors  = []
+    
 
 let rec validSemanticRec rep1 rep2  =       
   match rep2 with
   | [] -> true
-  | (x, xs)::tail -> if mem x xs then false
+  | (x, _)::tail -> if checkLoop rep1 x then false 
       else if (len (parents rep1 [x]) > 2) then false
       else validSemanticRec rep1 tail
           
