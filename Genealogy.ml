@@ -3,16 +3,13 @@
 (* 
 Aluno 1: 57833
 Aluno 2: 57747
-
 Comment:
-
 ?????????????????????????
 ?????????????????????????
 ?????????????????????????
 ?????????????????????????
 ?????????????????????????
 ?????????????????????????
-
 *)
 
 (*
@@ -99,14 +96,29 @@ let example = [
 		  
 let example2 = [
 			("a", ["f";"g"]);
-			("b", ["h";"i"]);
-			("f", ["l"; "b"]);
+			("c", ["h";"i"]);
+			("f", ["g"; "j"]);
 			("g", ["j"]);
-			("h", ["l"]);
+			("h", []);
 			("i", []);
-			("j", []);
-			("l", []);
+			("j", [])
 			]
+			
+let example3 = [
+    ("a",["d";"e"]);
+    ("b",["e";"f"]);
+    ("c",["g";"h"]);
+    ("d",["i"]);
+    ("e", ["i";"j";"d"]);
+    ("f", ["g";"m"]);
+    ("g", ["h";"m"]);
+    ("h", ["n"]);
+    ("i", ["j"]);
+    ("j", ["k"]);
+    ("k", []);
+    ("m", ["k"; "n"]);
+    ("n", [])
+    ]
 
 (* BASIC REPOSITORY FUNCTIONS - you can add more *)
 
@@ -165,6 +177,7 @@ let rec makeATree rep a =
 	| x::y::_ -> ANode(a, makeATree rep x, makeATree rep y)
 	
 
+(* FUNCTION repOfATree *)
 
 let getElementFromANode t = 
   match t with 
@@ -185,14 +198,6 @@ let rec repOfATreeRec t rep =
       let leftParent = getElementFromANode (lft) in
       let rightParent = getElementFromANode (rgt) in
       merge (repOfATreeRec lft ((leftParent, [a])::rep)) (repOfATreeRec rgt ((rightParent, [a])::rep))
-  
-	  
-(* FUNCTION repOfATree *)
-let repOfATree t = 
-  match t with
-  |ANil -> []
-  |ANode(a, _, _) -> 
-      repOfATreeRec t [(a, [])]
 
 
 (* FUNCTION makeDTree *)
@@ -218,13 +223,11 @@ let rec repOfDTree t =
   match t with
   | DNil -> []
   | DNode(x, xs) -> clean ((x, listOfDNodesElements (xs))::getDNode (xs))
-  
 and listOfDNodesElements l =
   match l with
   | [] -> []
   | DNil::_ -> failwith "repOfDTree: DNil inside the DNode list"
   | DNode(x, _)::xs -> x::listOfDNodesElements xs 
-                         
 and getDNode tList =
   match tList with
   | [] -> []
@@ -247,23 +250,31 @@ let siblings rep lst =
 
 
 (* FUNCTION siblingsInbreeding *)
-
-let siblingsInbreeding rep =
-	[]
+	
+(*We should reconsider this function*)
+let siblingsInbreeding rep = inter (parents example (all2 example)) (all2 example)
 
 
 (* FUNCTION waveN *)
+let rec waveNParents rep n lst =
+  if n = 0 then lst
+  else let parent = diff (parents rep lst) lst in
+    waveNParents rep (n-1) parent 
+	
+let rec waveNChildren rep n lst =
+  if n = 0 then lst
+  else let childs = diff (children rep lst) lst in
+    waveNChildren rep (n-1) childs 
 
 let waveN rep n lst =
-	waveNRec rep n lst lst
-	and waveNRec rep n lst discarded =
-	if n = 0 then lst
-	else let parent = parents rep lst in
-		let childs = children rep lst in
-    waveNRec rep (n-1) (diff (parents @ childs) (discarded)) (union (parents @ child) (discarded))
+  if n = 0 then lst
+  else let parent = parents rep lst in
+    let childs = children rep lst in
+    (waveNParents rep (n-1) parent) @ (waveNChildren rep (n-1) childs) 
 
 
 (* FUNCTION merge *)
+
 let rec mergeRec l rep1 rep2 =
 	match l with
 	| [] -> []
@@ -275,10 +286,35 @@ let merge rep1 rep2 =
 
 
 (* FUNCTION supremum *)
+	
+let rec getAllAncestors rep l = 
+	match l with
+	| [] -> []
+	| x::xs -> union (getAllAncestors rep xs) (parents rep [x])
+	
+let rec getPathList rep l = 
+	match l with 
+	| [] -> []
+	| x::xs -> (parents rep [x])::(getPathList rep xs)
 
-let supremum rep s =
-	[]
+let rec nodeInCommon pl = 
+	match pl with 
+	| [] -> []
+	| [x] -> []
+	| x::y::xs -> (inter x y) @ nodeInCommon xs
 
+let rec supremumRec rep s = 
+	let pathList = getPathList rep s in 
+	let res = nodeInCommon pathList in
+	if res = [] then supremumRec rep (getAllAncestors rep s)
+	else res
+	
+let supremum rep s = 
+	if s = [] then []
+	(*else let childNodes = all2 rep in 
+	if len (diff (childNodes) s ) == len (childNodes) then []*)
+	else supremumRec rep s
+	
 
 (* FUNCTION validStructural *)
 
@@ -286,12 +322,13 @@ let supremum rep s =
 let rec checkOccurence rep1 rep2 =
   match rep2 with
   | [] -> true 
-  | (_, sons)::xs -> if inter (sons) (all1 rep1) = sons then checkOccurence rep1 xs else false
+  | (_, sons)::xs -> if inter (sons) (all1 rep1) = sons then checkOccurence rep1 xs 
+					 else false
 
 let validStructural rep =
   let individuals = all1 rep in
   if (clean individuals) <> individuals then false
-  else (checkOccurence rep rep) 
+  else (checkOccurence rep rep)
 
 (* FUNCTION validSemantic *)
 
