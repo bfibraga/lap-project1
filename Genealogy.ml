@@ -246,7 +246,7 @@ let rec makeATree rep a =
 
 (* FUNCTION merge *)
 
-(*Auxiliar function that append *)
+(*Auxiliar function that append two different given repositories*)
 let rec mergeRec l rep1 rep2 =
 	match l with
 	| [] -> []
@@ -262,11 +262,13 @@ let merge rep1 rep2 =
 
 (* FUNCTION repOfATree *)
 
+(*Returns the value of a ANode*)
 let getElementFromANode t = 
   match t with 
   | ANil -> failwith "getElementFromANode: can't get element from empty tree"
   | ANode(x, _, _) -> x
                    
+(*Returns a repository recursively that represents the given ATree and sub-repository*)
 let rec repOfATreeRec t rep =
   match t with
   | ANil -> rep
@@ -282,13 +284,14 @@ let rec repOfATreeRec t rep =
       let rightParent = getElementFromANode (rgt) in
       merge (repOfATreeRec lft ((leftParent, [a])::rep)) (repOfATreeRec rgt ((rightParent, [a])::rep))
 
-(*Returns **)
+(*Returns a repository of the given ATree*)
 (* pre: saneATree t *)
 (* post: validStructural result *)
 let repOfATree at = repOfATreeRec at []
 
 (* FUNCTION makeDTree *)
 
+(*Returns a DTree recursively with a given repository and a Node*)
 let rec nbuildDTree rep d = 
 	let childrenList = children rep [d] in
 	match childrenList with 
@@ -298,6 +301,7 @@ and lnbuildDTree cl rep = match cl with
 	| [] -> []
 	| c::cs -> clean ([nbuildDTree rep c] @ (lnbuildDTree cs rep))
 
+(*Returns a DTree with given repository and a node *)
 let makeDTree rep d =
 	if not( mem d (all1 rep)) then DNode(d, [])
 	else nbuildDTree rep d
@@ -305,7 +309,7 @@ let makeDTree rep d =
 
 (* FUNCTION repOfDTree *)
 
-
+(*Returns a repository recursively with given DTree*)
 let rec repOfDTree t = 
   match t with
   | DNil -> []
@@ -323,6 +327,7 @@ and getDNode tList =
 
 (* FUNCTION descendantsN *)
 
+(*Returns descendants n levels of a list of nodes*)
 let rec descendantsN rep n lst =
 	if n = 0 then lst
 	else let child = children rep lst in
@@ -331,6 +336,7 @@ let rec descendantsN rep n lst =
 
 (* FUNCTION siblings *)
 
+(*Returns the sinblings of a list of nodes which are on the given repository*)
 let siblings rep lst =
 	let parent = parents rep lst in
 	children rep parent
@@ -338,6 +344,7 @@ let siblings rep lst =
 
 (* FUNCTION siblingsInbreeding *)
 	
+(*Builds a pair *)
 let rec buildPair l = (List.hd l, List.hd (List.tl l))
 	
 let rec nodeInCommon nl = 
@@ -367,7 +374,7 @@ let rec siblingsInbreedingRec rep l =
 (**)
 (* pre: validStructural rep && validSemantic rep *)
 (* post: noDuplicates result *)
-let siblingsInbreeding rep = siblingsInbreeding rep (all1 rep)
+let siblingsInbreeding rep = clean (siblingsInbreedingRec rep (all1 rep))
 
 
 (* FUNCTION waveN *)
@@ -381,11 +388,13 @@ let rec waveNChildren rep n lst =
   else let childs = diff (children rep lst) lst in
     waveNChildren rep (n-1) childs 
 
-let waveN rep n lst =
+let rec waveN rep n lst =
+  waveNRec rep n lst lst
+and waveNRec rep n lst discarded =
   if n = 0 then lst
   else let parent = parents rep lst in
     let childs = children rep lst in
-    (waveNParents rep (n-1) parent) @ (waveNChildren rep (n-1) childs) 
+    waveNRec rep (n-1) (diff (parent @ childs) (discarded)) (union (parent @ childs) (discarded))
 
 
 (* FUNCTION supremum *)
@@ -435,16 +444,22 @@ let rec checkOccurence rep1 rep2 =
 
 let validStructural rep =
   let individuals = all1 rep in
- 
-  if inter ((clean individuals))  (individuals) = individuals then false 
-  else (checkOccurence rep rep)
+  if ((clean individuals) = individuals)&&
+  (checkOccurence rep rep) then true 
+  else false
+  
 
 (* FUNCTION validSemantic *)
+
+let rec checkLoop rep x = 
+  let ancestors = getAllAncestors rep [x] in
+  diff [x] ancestors  = []
+
 
 let rec validSemanticRec rep1 rep2  =       
   match rep2 with
   | [] -> true
-  | (x, xs)::tail -> if mem x xs then false
+  | (x, _)::tail -> if checkLoop rep1 x then false 
       else if (len (parents rep1 [x]) > 2) then false
       else validSemanticRec rep1 tail
           
