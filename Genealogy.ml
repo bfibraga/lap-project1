@@ -375,6 +375,7 @@ let rec nodeInCommon pl =
 	| x::y::xs -> (inter x y) @ nodeInCommon xs
 
 let rec supremumRec rep s = 
+	if s = [] then s else
 	let pathList = getPathList rep s in 
 	let res = nodeInCommon pathList in
 	if res = [] then supremumRec rep (clean (getAllAncestors rep s))
