@@ -355,31 +355,37 @@ and waveNRec rep n lst discarded =
 (* FUNCTION supremum *)
 	
 let rec getAllAncestors rep l = 
-	match l with
-	| [] -> []
-	| x::xs -> let parentsList = parents rep [x] in 
-				if parentsList = [] then getAllAncestors rep xs
-				else parentsList@(getAllAncestors rep parentsList)@(getAllAncestors rep xs)
-	
+  let parent = parents rep l in 
+  let grandParent = union (parent) (parents rep parent) in
+  if diff grandParent parent  = [] then parent else  
+    union grandParent (getAllAncestors rep grandParent)
+                                                         
 let getAscendentPath rep e = getAllAncestors rep [e]
 
 let rec getPathList rep l = 
-	match l with 
-	| [] -> []
-	| x::xs ->  (getAscendentPath rep x)::(getPathList rep xs)
+  match l with 
+  | [] -> []
+  | x::xs ->  (getAscendentPath rep x)::(getPathList rep xs)
 
 let rec nodeInCommon pl = 
-	match pl with 
-	| [] -> []
-	| [x] -> []
-	| x::y::xs -> (inter x y) @ nodeInCommon xs
+  match pl with 
+  | [] -> []
+  | [x] -> []
+  | x::y::xs -> (inter x y) @ nodeInCommon xs
+                  
+let rec getMaximumDistanceNodes rep s =
+  if rep = [] then s
+  else let (nodes, tail) = cut rep in
+    let individuals = all1 tail in
+    if inter individuals s <> [] then getMaximumDistanceNodes tail s
+    else inter (all1 nodes) s
 
 let rec supremumRec rep s = 
-	if s = [] then s else
-	let pathList = getPathList rep s in 
-	let res = nodeInCommon pathList in
-	if res = [] then supremumRec rep (clean (getAllAncestors rep s))
-	else res
+  if s = [] then s else
+    let pathList = getPathList rep s in 
+    let res = nodeInCommon pathList in
+    if res = [] then supremumRec rep (clean (getAllAncestors rep s))
+    else getMaximumDistanceNodes rep res
 	
 let supremum rep s = 
 	if s = [] then []
