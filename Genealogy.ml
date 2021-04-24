@@ -338,18 +338,54 @@ let siblings rep lst =
 
 (* FUNCTION siblingsInbreeding *)
 	
-(*We should reconsider this function*)
-let siblingsInbreeding rep = []
+let rec buildPair l = (List.hd l, List.hd (List.tl l))
+	
+let rec nodeInCommon nl = 
+  match nl with 
+  | [] -> []
+  | [x] -> []
+  | x::y::xs -> (inter x y) @ nodeInCommon xs
+
+let rec childrenInCommon rep sl =
+	match sl with
+	| [] -> []
+	| x::xs -> 
+	let childrenList = children rep [x] in
+	if childrenList = [] then childrenInCommon rep xs
+	else ( children rep [x] )::( childrenInCommon rep xs)
+	
+let rec siblingsInbreedingRec rep l = 
+	match l with 
+	| [] -> []
+	| x::xs -> 
+	let siblingsList = siblings rep [x] in
+	if siblingsList = [] then siblingsInbreedingRec rep xs 
+	else let childrenInCommonList = nodeInCommon (childrenInCommon rep siblingsList) in
+	if childrenInCommonList = [] then siblingsInbreedingRec rep xs
+	else (buildPair (parents rep childrenInCommonList))::(siblingsInbreedingRec rep xs)
+	
+(**)
+(* pre: validStructural rep && validSemantic rep *)
+(* post: noDuplicates result *)
+let siblingsInbreeding rep = siblingsInbreeding rep (all1 rep)
 
 
 (* FUNCTION waveN *)
-let rec waveN rep n lst =
-  waveNRec rep n lst lst
-and waveNRec rep n lst discarded =
+let rec waveNParents rep n lst =
+  if n = 0 then lst
+  else let parent = diff (parents rep lst) lst in
+    waveNParents rep (n-1) parent 
+	
+let rec waveNChildren rep n lst =
+  if n = 0 then lst
+  else let childs = diff (children rep lst) lst in
+    waveNChildren rep (n-1) childs 
+
+let waveN rep n lst =
   if n = 0 then lst
   else let parent = parents rep lst in
     let childs = children rep lst in
-    waveNRec rep (n-1) (diff (parent @ childs) (discarded)) (union (parent @ childs) (discarded))
+    (waveNParents rep (n-1) parent) @ (waveNChildren rep (n-1) childs) 
 
 
 (* FUNCTION supremum *)
@@ -359,19 +395,13 @@ let rec getAllAncestors rep l =
   let grandParent = union (parent) (parents rep parent) in
   if diff grandParent parent  = [] then parent else  
     union grandParent (getAllAncestors rep grandParent)
-                                                         
+
 let getAscendentPath rep e = getAllAncestors rep [e]
 
 let rec getPathList rep l = 
   match l with 
   | [] -> []
-  | x::xs ->  (getAscendentPath rep x)::(getPathList rep xs)
-
-let rec nodeInCommon pl = 
-  match pl with 
-  | [] -> []
-  | [x] -> []
-  | x::y::xs -> (inter x y) @ nodeInCommon xs
+  | x::xs -> (getAscendentPath rep x)::(getPathList rep xs)
                   
 let rec getMaximumDistanceNodes rep s =
   if rep = [] then s
@@ -411,15 +441,10 @@ let validStructural rep =
 
 (* FUNCTION validSemantic *)
 
-let rec checkLoop rep x = 
-  let ancestors = getAllAncestors rep [x] in
-  diff [x] ancestors  = []
-    
-
 let rec validSemanticRec rep1 rep2  =       
   match rep2 with
   | [] -> true
-  | (x, _)::tail -> if checkLoop rep1 x then false 
+  | (x, xs)::tail -> if mem x xs then false
       else if (len (parents rep1 [x]) > 2) then false
       else validSemanticRec rep1 tail
           
