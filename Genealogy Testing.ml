@@ -354,8 +354,7 @@ let rec findCommonSon rep elem lst =
   match lst with
   | [] -> [] 
   | x::xs -> let children =  inter (children rep [elem]) (children rep [x]) in 
-      if children <> [] then children @ findCommonSon rep elem xs
-      else findCommonSon rep elem xs
+      children @ findCommonSon rep elem xs
         
 
 let rec findSiblingPairs rep lst =
@@ -365,9 +364,10 @@ let rec findSiblingPairs rep lst =
       let siblings = diff (siblings rep [x]) [x] in
       if siblings = [] then findSiblingPairs rep xs else
         let commonSons = findCommonSon rep x siblings in
-        if commonSons <> [] then makePair (parents rep commonSons)::findSiblingPairs rep xs
+        if commonSons = [] then findSiblingPairs rep xs
+        else if (len (parents rep commonSons) mod 2) = 0 then makePair (parents rep commonSons)::findSiblingPairs rep xs
         else findSiblingPairs rep xs
-
+            
 let siblingsInbreeding rep = 
   let possibleSiblings = diff (all1 rep) (union (roots rep) (leaves rep)) in
   clean (findSiblingPairs rep possibleSiblings)
@@ -431,7 +431,7 @@ let rec checkOccurence rep1 rep2 =
 
 let validStructural rep =
   let individuals = all1 rep in
-  if ((clean individuals) = individuals)&&
+  if len (clean (individuals)) = len individuals &&
      (checkOccurence rep rep) then true 
   else false
   
