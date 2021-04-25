@@ -282,12 +282,12 @@ let rec repOfATreeRec t rep =
   | ANode(a, lft, rgt) -> 
       let leftParent = getElementFromANode (lft) in
       let rightParent = getElementFromANode (rgt) in
-      merge (repOfATreeRec lft ((leftParent, [a])::rep)) (repOfATreeRec rgt ((rightParent, [a])::rep))
+   merge (repOfATreeRec lft ((leftParent, [a])::rep)) (repOfATreeRec rgt ((rightParent, [a])::rep))
 
 (*Returns a repository of the given ATree*)
 (* pre: saneATree t *)
 (* post: validStructural result *)
-let repOfATree at = repOfATreeRec at []
+let repOfATree at = repOfATreeRec at [(getElementFromANode at, [])]
 
 (* FUNCTION makeDTree *)
 
@@ -378,16 +378,6 @@ let siblingsInbreeding rep = clean (siblingsInbreedingRec rep (all1 rep))
 
 
 (* FUNCTION waveN *)
-let rec waveNParents rep n lst =
-  if n = 0 then lst
-  else let parent = diff (parents rep lst) lst in
-    waveNParents rep (n-1) parent 
-	
-let rec waveNChildren rep n lst =
-  if n = 0 then lst
-  else let childs = diff (children rep lst) lst in
-    waveNChildren rep (n-1) childs 
-
 let rec waveN rep n lst =
   waveNRec rep n lst lst
 and waveNRec rep n lst discarded =
@@ -410,7 +400,7 @@ let getAscendentPath rep e = getAllAncestors rep [e]
 let rec getPathList rep l = 
   match l with 
   | [] -> []
-  | x::xs -> (getAscendentPath rep x)::(getPathList rep xs)
+  | x::xs -> (getAscendentPath rep x)::(getPathList rep xs) 
                   
 let rec getMaximumDistanceNodes rep s =
   if rep = [] then s
@@ -419,18 +409,14 @@ let rec getMaximumDistanceNodes rep s =
     if inter individuals s <> [] then getMaximumDistanceNodes tail s
     else inter (all1 nodes) s
 
-let rec supremumRec rep s = 
-  if s = [] then s else
-    let pathList = getPathList rep s in 
-    let res = nodeInCommon pathList in
-    if res = [] then supremumRec rep (clean (getAllAncestors rep s))
-    else getMaximumDistanceNodes rep res
-	
 let supremum rep s = 
-	if s = [] then []
-	(*else let childNodes = all2 rep in 
-	if len (diff (childNodes) s ) == len (childNodes) then []*)
-	else supremumRec rep s
+  if s = [] then []
+  else if len s = 1 then getMaximumDistanceNodes rep (parents rep s) 
+  else let pathList = getPathList rep s in 
+    let res = nodeInCommon pathList in
+    if res = [] then res
+    else getMaximumDistanceNodes rep res
+    
 	
 
 (* FUNCTION validStructural *)
