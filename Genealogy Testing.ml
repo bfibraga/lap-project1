@@ -269,6 +269,8 @@ let getElementFromANode t =
   | ANode(x, _, _) -> x
                    
 (*Returns a repository recursively that represents the given ATree and sub-repository*)
+(* pre: validStructural rep && validSemantic rep *)
+(* post: none *)
 let rec repOfATreeRec t rep =
   match t with
   | ANil -> rep
@@ -282,7 +284,8 @@ let rec repOfATreeRec t rep =
   | ANode(a, lft, rgt) -> 
       let leftParent = getElementFromANode (lft) in
       let rightParent = getElementFromANode (rgt) in
-      merge (repOfATreeRec lft ((leftParent, [a])::rep)) (repOfATreeRec rgt ((rightParent, [a])::rep))
+      merge (repOfATreeRec lft ((leftParent, [a])::rep)) 
+	  (repOfATreeRec rgt ((rightParent, [a])::rep))
 
 (*Returns a repository of the given ATree*)
 (* pre: saneATree t *)
@@ -292,6 +295,8 @@ let repOfATree at = repOfATreeRec at [(getElementFromANode at, [])]
 (* FUNCTION makeDTree *)
 
 (*Returns a DTree recursively with a given repository and a Node*)
+(* pre: validStructural rep && validSemantic rep && not (mem d (all1 rep) = []) *)
+(* post: none *)
 let rec nbuildDTree rep d = 
   let childrenList = children rep [d] in
   match childrenList with 
@@ -302,6 +307,8 @@ and lnbuildDTree cl rep = match cl with
   | c::cs -> clean ([nbuildDTree rep c] @ (lnbuildDTree cs rep))
 
 (*Returns a DTree with given repository and a node *)
+(* pre: validStructural rep && validSemantic rep *)
+(* post: none *)
 let makeDTree rep d =
   if not( mem d (all1 rep)) then DNode(d, [])
   else nbuildDTree rep d
@@ -310,6 +317,8 @@ let makeDTree rep d =
 (* FUNCTION repOfDTree *)
 
 (*Returns a repository recursively with given DTree*)
+(* pre: saneDTree t *)
+(* post: validStructural result *)
 let rec repOfDTree t = 
   match t with
   | DNil -> []
@@ -328,6 +337,8 @@ and getDNode tList =
 (* FUNCTION descendantsN *)
 
 (*Returns descendants n levels of a list of nodes*)
+(* pre: validStructural rep && validSemantic rep && n >= 0 && noDuplicates lst *)
+(* post: noDuplicates result *)
 let rec descendantsN rep n lst =
   if n = 0 then lst
   else let child = children rep lst in
@@ -337,6 +348,8 @@ let rec descendantsN rep n lst =
 (* FUNCTION siblings *)
 
 (*Returns the sinblings of a list of nodes which are on the given repository*)
+(* pre: validStructural rep && validSemantic rep && noDuplicates lst *)
+(* post: noDuplicates result *)
 let siblings rep lst =
   let parent = parents rep lst in
   children rep parent
@@ -344,19 +357,27 @@ let siblings rep lst =
 
 (* FUNCTION siblingsInbreeding *)
 
+(*Returns a pair of two elements of list with length of two*)
+(* pre: len(lst) = 2*)
 let makePair lst = 
   match lst with
   | [] -> failwith "makePair: can't make pair with empty list"
   | [x] -> failwith "makePair: can't make pair with one element"
   | x::y::_ -> (x, y)
 
+(*Returns the list of common son out of given list of nodes which 
+  belongs to the given repository*)
+(* pre: *)
 let rec findCommonSon rep elem lst =
   match lst with
   | [] -> [] 
   | x::xs -> let children =  inter (children rep [elem]) (children rep [x]) in 
       children @ findCommonSon rep elem xs
         
-
+(*Returns a list of possible pair of nodes which can be sinblings of a 
+  given repository and list of nodes*)
+(* pre: validStructural rep && validSemantic rep *)
+(* post: none *)
 let rec findSiblingPairs rep lst =
   match lst with
   | [] -> []
@@ -367,12 +388,19 @@ let rec findSiblingPairs rep lst =
         if commonSons = [] then findSiblingPairs rep xs
         else if (len (parents rep commonSons) mod 2) = 0 then makePair (parents rep commonSons)::findSiblingPairs rep xs
         else findSiblingPairs rep xs
-            
+
+(*Returns all their sinblings that have a common child/children with given repository*)
+(* pre: validStructural rep && validSemantic rep *)
+(* post: noDuplicates result *)
 let siblingsInbreeding rep = 
   let possibleSiblings = diff (all1 rep) (union (roots rep) (leaves rep)) in
   clean (findSiblingPairs rep possibleSiblings)
       
 (* FUNCTION waveN *)
+
+(*Returns a list of nodes that are a distance n from the given list of nodes*)
+(* pre: validStructural rep && validSemantic rep && n >= 0 && noDuplicates lst *)
+(* post: noDuplicates result *)
 let rec waveN rep n lst =
   waveNRec rep n lst lst
 and waveNRec rep n lst discarded =
@@ -384,25 +412,34 @@ and waveNRec rep n lst discarded =
 
 (* FUNCTION supremum *)
 
+(*Returns a list of nodes that are ancestors of the given list of nodes, 
+  which are on the repository*)
+(* pre: validStructural rep && validSemantic rep*)
+(* post: none*)
 let rec getAllAncestors rep l = 
   let parent = parents rep l in 
   let grandParent = union (parent) (parents rep parent) in
   if diff grandParent parent  = [] then parent else  
     union grandParent (getAllAncestors rep grandParent)
 
+(*Returns a list of nodes that are ancestors of the given nodes, 
+  which is on the given repository*)
 let getAscendentPath rep e = getAllAncestors rep [e]
 
+(*Returns all paths of a given list of nodes, which are on the given repository*)
 let rec getPathList rep l = 
   match l with 
   | [] -> []
   | x::xs -> (getAscendentPath rep x)::(getPathList rep xs) 
-                                       
+
+(*Returns a list of nodes that are in common of the given list*)
 let rec nodeInCommon nl = 
   match nl with 
   | [] -> []
   | [x] -> []
   | x::y::xs -> (inter x y) @ nodeInCommon xs
-                  
+
+(*Returns a list of nodes that are as far of the given nodes, which are on the repository*)
 let rec getMaximumDistanceNodes rep s =
   if rep = [] then s
   else let (nodes, tail) = cut rep in
@@ -410,6 +447,9 @@ let rec getMaximumDistanceNodes rep s =
     if inter individuals s <> [] then getMaximumDistanceNodes tail s
     else inter (all1 nodes) s
 
+(*Returns the list of the common ancestors of the given list of nodes*)
+(* pre: validStructural rep && validSemantic rep && noDuplicates lst *)
+(* post: noDuplicates result *)
 let supremum rep s = 
   if s = [] then []
   else if len s = 1 then getMaximumDistanceNodes rep (parents rep s) 
@@ -418,17 +458,18 @@ let supremum rep s =
     if res = [] then res
     else getMaximumDistanceNodes rep res
     
-      
-
 (* FUNCTION validStructural *)
 
-
+(*Checks if the given reposiroties are the same*)
 let rec checkOccurence rep1 rep2 = 
   match rep2 with
   | [] -> true 
   | (_, sons)::xs -> if inter (sons) (all1 rep1) = sons then checkOccurence rep1 xs 
       else false
 
+(*Checks if the struture of the given repository is valid*)
+(* pre: none *)
+(* post: none *)
 let validStructural rep =
   let individuals = all1 rep in
   if len (clean (individuals)) = len individuals &&
@@ -438,6 +479,7 @@ let validStructural rep =
 
 (* FUNCTION validSemantic *)
 
+(*Checks if the given repository has a loop*)
 let rec checkLoop rep x = 
   let ancestors = getAllAncestors rep [x] in
   diff [x] ancestors  = []
@@ -449,6 +491,9 @@ let rec validSemanticRec rep1 rep2  =
   | (x, _)::tail -> if checkLoop rep1 x then false 
       else if (len (parents rep1 [x]) > 2) then false
       else validSemanticRec rep1 tail
-          
+
+(*Checks if the semantic of the given repository is valid*)
+(* pre: validStructural rep *)
+(* post: none *)
 let validSemantic rep =
   validSemanticRec rep rep
